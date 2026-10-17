@@ -184,6 +184,18 @@ main{padding-block:22px 120px}
 .msg .acts button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700;cursor:pointer;min-height:36px}
 .msg .acts button.pri{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .msg.err{border-color:var(--warn);background:var(--warn-soft)}
+.keep{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+.keep button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700;cursor:pointer;min-height:36px}
+.keep form{display:flex;gap:6px;width:100%}
+.keep input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:500 15px var(--f-body);padding:6px 10px;direction:ltr;text-align:left}
+.keep .note{font-size:14px;font-weight:700}
+.keep .note.ok{color:var(--ok)} .keep .note.bad{color:var(--warn)}
+.shot{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;gap:12px;overflow-y:auto;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.shot p{color:#fff;font-weight:700;text-align:center;margin:0}
+.shot img{max-width:min(520px,100%);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.shot .row{justify-content:center}
+.shot .btn{background:#fff;color:#10202f;border-color:#fff}
 .typing{display:inline-flex;gap:4px}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:pulse 1s infinite}
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
@@ -565,6 +577,7 @@ async function ask(q){
       <div class="acts"><button type="button" class="ok">זה ענה לי</button><button type="button" class="pri more">שאלה ל-Volt בכל זאת</button></div>`);
     m.querySelector(".ok").addEventListener("click", ev => { ev.target.parentElement.innerHTML = '<span style="color:var(--ok);font-weight:700">מעולה, בהצלחה!</span>'; });
     m.querySelector(".more").addEventListener("click", ev => { ev.target.parentElement.remove(); askClaude(q, h); });
+    addKeep(m, h.q, h.a, null);
     return;
   }
   askClaude(q, hits[0]?.e);
@@ -578,7 +591,7 @@ async function askClaude(q, near, pic){
   const userTurn = (ctxLine ? ctxLine + "\n\n" : "") + (pic ? "הסטודנט צירף תמונה של שאלה. קרא אותה בעיון, כולל שרטוטים ומספרים.\n" : "") + "שאלה: " + q;
   const histTurn = (pic ? "[צורפה תמונה] " : "") + userTurn;
   try {
-    let answer;
+    let answer, ansId = null;
     if (sampleFn) {
       const opts = {};
       if (pic) { if (!imgOK) throw new Error("שליחת תמונות לא זמינה כאן. כתבו את השאלה במילים."); opts.images = [pic.blob]; }
@@ -586,7 +599,7 @@ async function askClaude(q, near, pic){
       answer = r.text;
     } else if (CONFIG.webhookUrl) {
       const res = await fetch(CONFIG.webhookUrl, {method:"POST", body:JSON.stringify({question:q, context:ctxLine, history:chat.slice(-6), image: pic ? {media_type:"image/jpeg", data:pic.b64} : undefined})});
-      const j = await res.json(); if (j.error) throw new Error(j.error); answer = j.answer;
+      const j = await res.json(); if (j.error) throw new Error(j.error); answer = j.answer; ansId = j.id || null;
     } else {
       wait.remove();
       addMsg("b err", `<b>עדיין אין חיבור ל-Volt.</b><br>${pic ? "שאלה בתמונה" : "שאלה שאין לה תשובה במאגר"} דורשת את Volt. המרצה צריך להגדיר את החיבור (כתובת ה-Apps Script) כדי שאפשר יהיה לשאול כל שאלה.`);
@@ -594,12 +607,110 @@ async function askClaude(q, near, pic){
     }
     chat.push({role:"user", content:histTurn}, {role:"assistant", content:answer});
     wait.remove();
-    bot(`<span class="src ai">Volt</span><br>${md(answer)}`);
+    const am = bot(`<span class="src ai">Volt</span><br>${md(answer)}`);
+    addKeep(am, pic ? (q + " (שאלה מתמונה)") : q, answer, ansId);
   } catch (err) {
     wait.remove();
     const code = err && err.code;
     addMsg("b err", code === "rate_limited" ? "יותר מדי שאלות ברגע אחד. נסו שוב בעוד דקה." : `<b>לא הצלחתי לקבל תשובה.</b><br>${esc(err && err.message || "בדקו את החיבור ונסו שוב.")}`);
   }
+}
+
+/* ============ שמירת פתרון: תמונה או מייל ============ */
+const icoImg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>';
+const icoMail = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+function addKeep(m, q, a, id){
+  const k = document.createElement("div"); k.className = "keep";
+  k.innerHTML = `<button type="button" class="kimg">${icoImg}שמירה כתמונה</button>` + (id ? `<button type="button" class="kmail">${icoMail}שליחה למייל</button>` : "");
+  m.appendChild(k);
+  k.querySelector(".kimg").addEventListener("click", ev => saveImage(q, a, ev.currentTarget));
+  const mb = k.querySelector(".kmail"); if (mb) mb.addEventListener("click", () => mailForm(k, id));
+  log.scrollTop = log.scrollHeight;
+}
+function lsGet(key){ try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } }
+function lsSet(key, v){ try { localStorage.setItem(key, v); } catch (e) {} }
+function mailForm(k, id){
+  k.innerHTML = `<form><label class="sr" for="em-${id}">כתובת מייל</label><input id="em-${id}" type="email" required placeholder="name@example.com" value="${esc(lsGet("volt-email"))}"><button type="submit" class="go" style="min-height:36px;padding:4px 14px">שליחה</button></form><span class="note"></span>`;
+  const f = k.querySelector("form"), inp = k.querySelector("input"), note = k.querySelector(".note");
+  inp.focus();
+  f.addEventListener("submit", async e => {
+    e.preventDefault();
+    const to = inp.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { note.className = "note bad"; note.textContent = "הכתובת לא תקינה. בדקו ונסו שוב."; return; }
+    note.className = "note"; note.textContent = "שולח…"; f.querySelector("button").disabled = true;
+    try {
+      const res = await fetch(CONFIG.webhookUrl, {method:"POST", body:JSON.stringify({action:"email", id, to})});
+      const j = await res.json(); if (j.error) throw new Error(j.error);
+      lsSet("volt-email", to); f.remove(); note.className = "note ok"; note.textContent = "הפתרון נשלח ל-" + to;
+    } catch (err) {
+      f.querySelector("button").disabled = false; note.className = "note bad"; note.textContent = (err && err.message) || "השליחה לא הצליחה. נסו שוב.";
+    }
+  });
+}
+
+/* ציור הפתרון על קנבס */
+function plainLines(a){
+  return a.split("\n").map(l => {
+    let t = l.replace(/^#{1,4}\s*/, ""), bold = false;
+    if (/^\s*\*\*.+\*\*\s*$/.test(t) || /^#{1,4}\s/.test(l)) bold = true;
+    t = t.replace(/\*\*(.+?)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1");
+    const li = t.match(/^\s*(?:[-*•])\s+(.*)/); if (li) t = "• " + li[1];
+    return {t, bold};
+  });
+}
+function wrap(g, text, maxW){
+  const words = text.split(/\s+/), out = []; let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (g.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+  }
+  out.push(line); return out;
+}
+async function renderPNG(q, a){
+  try { await document.fonts.ready; } catch (e) {}
+  const W = 1080, P = 64, maxW = W - P * 2, body = 34, lh = 54;
+  const cv = document.createElement("canvas"), g = cv.getContext("2d");
+  const fBody = `500 ${body}px Assistant, Arial, sans-serif`, fBold = `800 ${body}px Assistant, Arial, sans-serif`, fQ = `400 44px "Secular One", Arial, sans-serif`;
+  g.direction = "rtl";
+  g.font = fQ; const qLines = wrap(g, q, maxW);
+  const rows = [];
+  for (const L of plainLines(a)) { if (!L.t.trim()) { rows.push({t:"", gap:true}); continue; } g.font = L.bold ? fBold : fBody; for (const w of wrap(g, L.t, maxW)) rows.push({t:w, bold:L.bold}); }
+  const H = 150 + qLines.length * 60 + 40 + rows.reduce((h, r) => h + (r.gap ? 22 : lh), 0) + 120;
+  cv.width = W; cv.height = H; g.direction = "rtl"; g.textBaseline = "alphabetic";
+  g.fillStyle = "#f4f7fa"; g.fillRect(0, 0, W, H);
+  g.fillStyle = "#10202f"; g.fillRect(0, 0, W, 110);
+  g.fillStyle = "#f2b705"; g.fillRect(0, 110, W, 8);
+  g.textAlign = "right"; g.fillStyle = "#ffffff"; g.font = `400 40px "Secular One", Arial, sans-serif`; g.fillText("מכללת וולט", W - P, 70);
+  g.textAlign = "left"; g.fillStyle = "#f2b705"; g.font = `700 26px "JetBrains Mono", monospace`; g.fillText("VOLT", P, 68);
+  let y = 190; g.textAlign = "right"; g.fillStyle = "#0b5cad"; g.font = fQ;
+  for (const l of qLines) { g.fillText(l, W - P, y); y += 60; }
+  g.fillStyle = "#d3dde7"; g.fillRect(P, y - 20, maxW, 2); y += 40;
+  g.fillStyle = "#10202f";
+  for (const r of rows) { if (r.gap) { y += 22; continue; } g.font = r.bold ? fBold : fBody; g.fillText(r.t, W - P, y); y += lh; }
+  g.fillStyle = "#526477"; g.font = `500 24px Assistant, Arial, sans-serif`;
+  g.fillText("הפתרון נוצר על ידי Volt · " + new Date().toLocaleDateString("he-IL"), W - P, H - 50);
+  return new Promise(ok => cv.toBlob(b => ok({blob:b, url:cv.toDataURL("image/png")}), "image/png"));
+}
+async function saveImage(q, a, btn){
+  btn.disabled = true;
+  try {
+    const {blob, url} = await renderPNG(q, a);
+    const file = new File([blob], "volt-solution.png", {type:"image/png"});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      try { await navigator.share({files:[file], title:"פתרון מ-Volt"}); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    showShot(url);
+  } catch (e) { addMsg("b err", "לא הצלחתי ליצור את התמונה. נסו שוב."); }
+  finally { btn.disabled = false; }
+}
+function showShot(url){
+  const o = document.createElement("div"); o.className = "shot"; o.dir = "rtl"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", "הפתרון כתמונה");
+  o.innerHTML = `<p>בטלפון: לחיצה ארוכה על התמונה ← "שמירה בתמונות"</p><img alt="הפתרון כתמונה" src="${url}">
+    <div class="row"><a class="btn" href="${url}" download="volt-solution.png">הורדה</a><button class="btn" type="button">סגירה</button></div>`;
+  o.querySelector("button").addEventListener("click", () => o.remove());
+  o.addEventListener("click", e => { if (e.target === o) o.remove(); });
+  document.body.appendChild(o);
 }
 
 /* תמונה: צילום או גלריה. מוקטנת בדפדפן ל-1600 פיקסלים לפני השליחה */

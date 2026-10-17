@@ -420,7 +420,7 @@ function homeView(){
    <section class="hero">
      <span class="eyebrow">הנדסאי חשמל · שלוש שנים · פרויקט גמר</span>
      <h1>לומדים חשמל, <em>ושואלים</em> מתי שרוצים.</h1>
-     <p class="lead">חומרי הלימוד של כל המסלול במקום אחד, ועוזר שעונה על שאלות: קודם מהמאגר של המכללה, ואם אין שם תשובה, עונה Tvuna, המערכת החכמה של המכללה. אפשר גם לצלם שאלה מהדף או להעלות תמונה מהגלריה.</p>
+     <p class="lead">חומרי הלימוד של כל המסלול במקום אחד, ועוזר שעונה על שאלות: קודם מהמאגר של המכללה, ואם אין שם תשובה, עונה Volt, המערכת החכמה של המכללה. אפשר גם לצלם שאלה מהדף או להעלות תמונה מהגלריה.</p>
      <form class="askbig" id="heroAsk"><label class="sr" for="heroQ">שאלה</label>
        <input id="heroQ" placeholder="לדוגמה: איך מחשבים זרם קצר?" autocomplete="off">
        <button class="camhero" type="button" data-photo="1" aria-label="צילום או העלאת שאלה"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
@@ -435,7 +435,7 @@ function homeView(){
    <div class="how">
      <div><span class="stepn">01</span><b>בוחרים שנה וקורס</b><p>כל קורס מחולק לפרקים, ובכל פרק רשימת הנושאים.</p></div>
      <div><span class="stepn">02</span><b>שואלים על הפרק</b><p>הכפתור "שאלה על הפרק" פותח את העוזר עם ההקשר של הפרק.</p></div>
-     <div><span class="stepn">03</span><b>מקבלים תשובה</b><p>תשובה מוכנה מהמאגר מגיעה מיד. אם היא לא מספיקה, Tvuna ממשיכה משם.</p></div>
+     <div><span class="stepn">03</span><b>מקבלים תשובה</b><p>תשובה מוכנה מהמאגר מגיעה מיד. אם היא לא מספיקה, Volt ממשיך משם.</p></div>
    </div></div>`;
   $("#heroAsk").addEventListener("submit", e => { e.preventDefault(); const v = $("#heroQ").value.trim(); if (v) { openSheet(); ask(v); $("#heroQ").value = ""; } });
 }
@@ -499,7 +499,7 @@ let sampleFn = null;       // Claude בתוך claude.ai
 let imgOK = false;         // האם אפשר לשלוח תמונות דרך sampleFn
 
 function openSheet(){ sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add("open")); scrim.classList.add("on"); fab.setAttribute("aria-expanded","true"); fab.hidden = true;
-  if (!log.children.length) bot(`<div class="q">שלום! על מה נעבוד?</div>כתבו שאלה מכל קורס במסלול. קודם אחפש תשובה במאגר של המכללה, ואם אין שם תשובה מתאימה, Tvuna, המערכת החכמה של המכללה, תענה.`); }
+  if (!log.children.length) bot(`<div class="q">שלום! על מה נעבוד?</div>כתבו שאלה מכל קורס במסלול. קודם אחפש תשובה במאגר של המכללה, ואם אין שם תשובה מתאימה, Volt, המערכת החכמה של המכללה, יענה.`); }
 function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("on"); fab.setAttribute("aria-expanded","false"); fab.hidden = false; setTimeout(() => { if (!sheet.classList.contains("open")) sheet.hidden = true; }, 360); fab.focus(); }
 fab.addEventListener("click", openSheet);
 $("#closeSheet").addEventListener("click", closeSheet);
@@ -562,7 +562,7 @@ async function ask(q){
   if (hits.length && hits[0].s >= CONFIG.kbThreshold) {
     const h = hits[0].e;
     const m = bot(`<span class="src kb">מהמאגר · ${esc(courseName(h.c))}</span><div class="q">${esc(h.q)}</div>${md(h.a)}
-      <div class="acts"><button type="button" class="ok">זה ענה לי</button><button type="button" class="pri more">שאלה ל-Tvuna בכל זאת</button></div>`);
+      <div class="acts"><button type="button" class="ok">זה ענה לי</button><button type="button" class="pri more">שאלה ל-Volt בכל זאת</button></div>`);
     m.querySelector(".ok").addEventListener("click", ev => { ev.target.parentElement.innerHTML = '<span style="color:var(--ok);font-weight:700">מעולה, בהצלחה!</span>'; });
     m.querySelector(".more").addEventListener("click", ev => { ev.target.parentElement.remove(); askClaude(q, h); });
     return;
@@ -570,10 +570,10 @@ async function ask(q){
   askClaude(q, hits[0]?.e);
 }
 
-const SYSTEM = "שמך Tvuna (תבונה), המערכת החכמה של מכללת וולט. אתה מרצה סבלני במכללה להנדסאי חשמל בישראל (מגמת חשמל: שנה א יסודות, שנה ב מכונות חשמל ובקרת הספק, שנה ג מערכות הספק ומתקני חשמל, ופרויקט גמר). ענה בעברית, קצר וברור, ברמה של סטודנט להנדסאי. בשאלת חישוב: כתוב את הנוסחה, הצב מספרים עם יחידות, ותן תוצאה סופית. כשסטודנט מבקש פתרון לשיעורי בית, הדרך אותו צעד אחר צעד במקום לתת רק תשובה. אם השאלה נוגעת לתקנות החשמל, ציין שהערכים צריכים אימות מול נוסח התקנות העדכני. אל תמציא נתונים.";
+const SYSTEM = "שמך Volt, המערכת החכמה של מכללת וולט. אתה מרצה סבלני במכללה להנדסאי חשמל בישראל (מגמת חשמל: שנה א יסודות, שנה ב מכונות חשמל ובקרת הספק, שנה ג מערכות הספק ומתקני חשמל, ופרויקט גמר). ענה בעברית, קצר וברור, ברמה של סטודנט להנדסאי. בשאלת חישוב: כתוב את הנוסחה, הצב מספרים עם יחידות, ותן תוצאה סופית. כשסטודנט מבקש פתרון לשיעורי בית, הדרך אותו צעד אחר צעד במקום לתת רק תשובה. אם השאלה נוגעת לתקנות החשמל, ציין שהערכים צריכים אימות מול נוסח התקנות העדכני. אל תמציא נתונים.";
 
 async function askClaude(q, near, pic){
-  const wait = bot('<span class="typing" aria-label="Tvuna חושבת"><i></i><i></i><i></i></span>');
+  const wait = bot('<span class="typing" aria-label="Volt חושב"><i></i><i></i><i></i></span>');
   const ctxLine = [ctx ? "הסטודנט שואל במסגרת: " + ctx.label : "", near ? "תשובה קרובה מהמאגר (ייתכן שלא מספיקה): " + near.a : ""].filter(Boolean).join("\n");
   const userTurn = (ctxLine ? ctxLine + "\n\n" : "") + (pic ? "הסטודנט צירף תמונה של שאלה. קרא אותה בעיון, כולל שרטוטים ומספרים.\n" : "") + "שאלה: " + q;
   const histTurn = (pic ? "[צורפה תמונה] " : "") + userTurn;
@@ -589,12 +589,12 @@ async function askClaude(q, near, pic){
       const j = await res.json(); if (j.error) throw new Error(j.error); answer = j.answer;
     } else {
       wait.remove();
-      addMsg("b err", `<b>עדיין אין חיבור ל-Tvuna.</b><br>${pic ? "שאלה בתמונה" : "שאלה שאין לה תשובה במאגר"} דורשת את Tvuna. המרצה צריך להגדיר את החיבור (כתובת ה-Apps Script) כדי שאפשר יהיה לשאול כל שאלה.`);
+      addMsg("b err", `<b>עדיין אין חיבור ל-Volt.</b><br>${pic ? "שאלה בתמונה" : "שאלה שאין לה תשובה במאגר"} דורשת את Volt. המרצה צריך להגדיר את החיבור (כתובת ה-Apps Script) כדי שאפשר יהיה לשאול כל שאלה.`);
       return;
     }
     chat.push({role:"user", content:histTurn}, {role:"assistant", content:answer});
     wait.remove();
-    bot(`<span class="src ai">Tvuna</span><br>${md(answer)}`);
+    bot(`<span class="src ai">Volt</span><br>${md(answer)}`);
   } catch (err) {
     wait.remove();
     const code = err && err.code;
@@ -642,7 +642,7 @@ function askImage(text, pic){
 }
 $("#qIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#compose").requestSubmit(); } });
 
-function setStatus(){ const on = !!(sampleFn || CONFIG.webhookUrl); const s = $("#aiStatus"); s.textContent = on ? "Tvuna מחוברת" : "מאגר בלבד"; s.classList.toggle("on", on); }
+function setStatus(){ const on = !!(sampleFn || CONFIG.webhookUrl); const s = $("#aiStatus"); s.textContent = on ? "Volt מחובר" : "מאגר בלבד"; s.classList.toggle("on", on); }
 (async () => {
   try { if (window.claude && claude.use) { const s = await claude.use("sample"); if (s) { sampleFn = s; try { imgOK = !!(await s.limits()).images; } catch (e) {} } } } catch (e) {}
   setStatus();

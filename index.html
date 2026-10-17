@@ -508,7 +508,8 @@ const sheet = $("#sheet"), scrim = $("#scrim"), fab = $("#fab"), log = $("#log")
 let ctx = null;            // {id, label}
 const chat = [];        // שיחה עם Claude: [{role, content}]
 let sampleFn = null;       // Claude בתוך claude.ai
-let imgOK = false;         // האם אפשר לשלוח תמונות דרך sampleFn
+let imgOK = false;
+let dlFn = null;           // הורדת קבצים בתוך claude.ai         // האם אפשר לשלוח תמונות דרך sampleFn
 
 function openSheet(){ sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add("open")); scrim.classList.add("on"); fab.setAttribute("aria-expanded","true"); fab.hidden = true;
   if (!log.children.length) bot(`<div class="q">שלום! על מה נעבוד?</div>כתבו שאלה מכל קורס במסלול. קודם אחפש תשובה במאגר של המכללה, ואם אין שם תשובה מתאימה, Volt, המערכת החכמה של המכללה, יענה.`); }
@@ -700,15 +701,21 @@ async function saveImage(q, a, btn){
       try { await navigator.share({files:[file], title:"פתרון מ-Volt"}); return; }
       catch (e) { if (e && e.name === "AbortError") return; }
     }
-    showShot(url);
+    showShot(url, blob);
   } catch (e) { addMsg("b err", "לא הצלחתי ליצור את התמונה. נסו שוב."); }
   finally { btn.disabled = false; }
 }
-function showShot(url){
+function showShot(url, blob){
   const o = document.createElement("div"); o.className = "shot"; o.dir = "rtl"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", "הפתרון כתמונה");
   o.innerHTML = `<p>בטלפון: לחיצה ארוכה על התמונה ← "שמירה בתמונות"</p><img alt="הפתרון כתמונה" src="${url}">
-    <div class="row"><a class="btn" href="${url}" download="volt-solution.png">הורדה</a><button class="btn" type="button">סגירה</button></div>`;
-  o.querySelector("button").addEventListener("click", () => o.remove());
+    <div class="row">${dlFn ? '<button class="btn dl" type="button">הורדה</button>' : `<a class="btn" href="${url}" download="volt-solution.png">הורדה</a>`}<button class="btn cl" type="button">סגירה</button></div><p class="dlnote" hidden></p>`;
+  o.querySelector(".cl").addEventListener("click", () => o.remove());
+  const d = o.querySelector(".dl");
+  if (d) d.addEventListener("click", async () => {
+    const n = o.querySelector(".dlnote");
+    try { await dlFn.save({filename:"volt-solution.png", data:blob}); n.hidden = true; }
+    catch (e) { if (e && e.code === "declined") return; n.textContent = "ההורדה לא זמינה כאן. אפשר לשמור בלחיצה ארוכה על התמונה."; n.hidden = false; }
+  });
   o.addEventListener("click", e => { if (e.target === o) o.remove(); });
   document.body.appendChild(o);
 }
@@ -755,7 +762,7 @@ $("#qIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKe
 
 function setStatus(){ const on = !!(sampleFn || CONFIG.webhookUrl); const s = $("#aiStatus"); s.textContent = on ? "Volt מחובר" : "מאגר בלבד"; s.classList.toggle("on", on); }
 (async () => {
-  try { if (window.claude && claude.use) { const s = await claude.use("sample"); if (s) { sampleFn = s; try { imgOK = !!(await s.limits()).images; } catch (e) {} } } } catch (e) {}
+  try { if (window.claude && claude.use) { const s = await claude.use("sample"); if (s) { sampleFn = s; try { imgOK = !!(await s.limits()).images; } catch (e) {} } const d = await claude.use("downloads"); if (d) dlFn = d; } } catch (e) {}
   setStatus();
 })();
 setStatus();

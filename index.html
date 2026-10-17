@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head><body>
+<title>מכללת וולט</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: app shell — sticky bar, hash-routed views (home / year / course / projects), floating "ask" button that opens a two-stage tutor sheet */
+:root{
+  --bg:#eef3f7; --surface:#ffffff; --surface-2:#f5f8fb; --ink:#10202f; --muted:#526477; --line:#d3dde7;
+  --brand:#0b5cad; --brand-ink:#ffffff; --volt:#f2b705; --volt-ink:#2a1f00;
+  --y1:#0b5cad; --y1-soft:#e2edf9; --y2:#0f7a5c; --y2-soft:#dff2eb; --y3:#b4531b; --y3-soft:#f8e7dc; --pj:#6b3fa0; --pj-soft:#efe6f8;
+  --ok:#17784a; --warn:#a4400f; --warn-soft:#fbe9df;
+  --shadow:0 1px 0 rgba(16,32,47,.05),0 10px 30px -18px rgba(16,32,47,.35);
+  --f-display:"Secular One","Assistant",system-ui,sans-serif;
+  --f-body:"Assistant",system-ui,"Segoe UI",Arial,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c141c; --surface:#131e29; --surface-2:#182533; --ink:#e7eef5; --muted:#9db0c3; --line:#26384a;
+  --brand:#6aaef0; --brand-ink:#08121c; --volt:#f6c93a; --volt-ink:#1f1700;
+  --y1:#6aaef0; --y1-soft:#152c44; --y2:#4fd1a5; --y2-soft:#11302a; --y3:#f2985f; --y3-soft:#3a2214; --pj:#c39cf0; --pj-soft:#2a1d3d;
+  --ok:#6fd8a1; --warn:#f5a97a; --warn-soft:#3a2216;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -18px rgba(0,0,0,.7); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0c141c; --surface:#131e29; --surface-2:#182533; --ink:#e7eef5; --muted:#9db0c3; --line:#26384a;
+  --brand:#6aaef0; --brand-ink:#08121c; --volt:#f6c93a; --volt-ink:#1f1700;
+  --y1:#6aaef0; --y1-soft:#152c44; --y2:#4fd1a5; --y2-soft:#11302a; --y3:#f2985f; --y3-soft:#3a2214; --pj:#c39cf0; --pj-soft:#2a1d3d;
+  --ok:#6fd8a1; --warn:#f5a97a; --warn-soft:#3a2216;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -18px rgba(0,0,0,.7); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.65}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--volt);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;line-height:1.2;text-wrap:balance;margin:0}
+p{margin:0}
+.num{font-family:var(--f-mono);direction:ltr;unicode-bidi:isolate;font-size:.92em}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:12px;padding-block:10px}
+.logo{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;text-align:start;min-width:0}
+.logo b{font-family:var(--f-display);font-size:21px;font-weight:400;white-space:nowrap}
+.logo small{display:block;font-size:13px;color:var(--muted);line-height:1.2;white-space:nowrap}
+.navs{display:flex;gap:6px;margin-inline-start:auto;overflow-x:auto;scrollbar-width:none}
+.navs::-webkit-scrollbar{display:none}
+.nv{flex:none;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:700;font-size:15px;min-height:40px;transition:background .2s,border-color .2s}
+.nv[aria-current="page"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+@media (max-width:640px){.navs{display:none}.logo small{display:none}}
+
+main{padding-block:22px 120px}
+.view{animation:enter .35s ease both}
+@keyframes enter{from{opacity:.001;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* home hero */
+.hero{display:grid;gap:14px;padding-block:8px 22px}
+.eyebrow{font:700 13px var(--f-mono);letter-spacing:.12em;color:var(--brand)}
+.hero h1{font-size:clamp(34px,7.5vw,58px)}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,var(--volt) 62%);padding-inline:4px}
+.hero .lead{color:var(--muted);font-size:19px;max-width:58ch}
+.askbig{display:flex;gap:8px;background:var(--surface);border:2px solid var(--ink);border-radius:16px;padding:6px;box-shadow:var(--shadow);max-width:640px}
+.askbig input{flex:1;min-width:0;border:0;background:transparent;font:600 17px var(--f-body);color:var(--ink);padding:10px 12px}
+.askbig input:focus{outline:none}
+.askbig:focus-within{border-color:var(--brand)}
+.go{flex:none;border:0;border-radius:12px;background:var(--volt);color:var(--volt-ink);font-weight:800;padding:10px 18px;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:4px 12px;font-size:14px;cursor:pointer;color:var(--muted)}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+
+/* big tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:6px}
+@media (max-width:640px){.tiles{grid-template-columns:1fr}}
+.tile{--c:var(--y1);--cs:var(--y1-soft);position:relative;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;text-align:start;
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;cursor:pointer;box-shadow:var(--shadow);overflow:hidden;
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s}
+.tile::after{content:"";position:absolute;inset:auto 0 0 0;height:5px;background:var(--c);transform:scaleX(.18);transform-origin:right;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.tile:hover{transform:translateY(-4px);border-color:var(--c)}
+.tile:hover::after,.tile:focus-visible::after{transform:scaleX(1)}
+.tile .glyph{grid-row:span 2;width:64px;height:64px;border-radius:16px;background:var(--cs);color:var(--c);display:grid;place-items:center;font:400 34px var(--f-display)}
+.tile .tt{font:400 25px var(--f-display)}
+.tile .ts{color:var(--muted);font-size:15px}
+.tile .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:13px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--cs,var(--surface-2));color:var(--c,var(--muted))}
+.tile.y2{--c:var(--y2);--cs:var(--y2-soft)} .tile.y3{--c:var(--y3);--cs:var(--y3-soft)} .tile.pj{--c:var(--pj);--cs:var(--pj-soft)}
+
+.how{margin-top:30px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:720px){.how{grid-template-columns:1fr}}
+.how > div{border-top:3px solid var(--line);padding-top:12px}
+.how b{display:block;font-family:var(--f-display);font-weight:400;font-size:19px;margin-bottom:2px}
+.how p{color:var(--muted);font-size:15px}
+.stepn{font:700 13px var(--f-mono);color:var(--brand)}
+
+/* year / course */
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;color:var(--muted);margin-bottom:10px}
+.crumbs button{background:none;border:0;padding:0;color:var(--brand);cursor:pointer;font-weight:700}
+.vhead{--c:var(--y1);--cs:var(--y1-soft);background:var(--cs);border-radius:22px;padding:22px;display:grid;gap:6px;margin-bottom:18px}
+.vhead.y2{--c:var(--y2);--cs:var(--y2-soft)} .vhead.y3{--c:var(--y3);--cs:var(--y3-soft)} .vhead.pj{--c:var(--pj);--cs:var(--pj-soft)}
+.vhead .eyebrow{color:var(--c)}
+.vhead h1{font-size:clamp(30px,6vw,44px)}
+.vhead p{color:var(--muted);max-width:60ch}
+.courses{display:grid;gap:14px}
+.course{--c:var(--y1);display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;cursor:pointer;text-align:start;box-shadow:var(--shadow);transition:transform .2s,border-color .2s}
+.course:hover{transform:translateY(-2px);border-color:var(--c)}
+.course h2{font-size:23px}
+.course p{color:var(--muted);font-size:15px;grid-column:1}
+.course .arrow{grid-row:1/span 2;grid-column:2;width:46px;height:46px;border-radius:50%;background:var(--c);color:var(--surface);display:grid;place-items:center}
+.course .meta{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.y2 .course,.course.y2{--c:var(--y2)} .y3 .course,.course.y3{--c:var(--y3)}
+
+.chap{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.chap > button{width:100%;display:flex;gap:12px;align-items:center;text-align:start;background:none;border:0;padding:14px 16px;cursor:pointer;min-height:58px}
+.chap .cn{flex:none;width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font:700 15px var(--f-mono)}
+.chap .ct{flex:1;font-weight:800;font-size:18px;min-width:0}
+.chap .st{flex:none;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--muted)}
+.chap .st.ready{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.chap .chev{flex:none;transition:transform .25s}
+.chap.open .chev{transform:rotate(180deg)}
+.chap .body{display:none;padding:0 16px 16px;border-top:1px dashed var(--line)}
+.chap.open .body{display:block}
+.chap ul{margin:12px 0;padding-inline-start:22px}
+.chap li{margin-bottom:4px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ink);background:transparent;border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer;min-height:44px;text-decoration:none;color:var(--ink)}
+.btn.solid{background:var(--ink);color:var(--bg)}
+.btn.volt{background:var(--volt);color:var(--volt-ink);border-color:var(--volt)}
+.linkcard{display:flex;gap:12px;align-items:center;background:var(--y1-soft);border-radius:14px;padding:14px 16px;margin-bottom:14px;color:var(--ink);text-decoration:none;font-weight:700}
+.linkcard span{flex:1;min-width:0}
+.linkcard small{display:block;font-weight:400;color:var(--muted)}
+
+/* projects */
+.pipeline{display:grid;gap:0;counter-reset:s;margin:6px 0 22px}
+.pstep{display:grid;grid-template-columns:44px 1fr;gap:4px 14px;position:relative;padding-bottom:16px}
+.pstep::before{counter-increment:s;content:counter(s);width:44px;height:44px;border-radius:50%;background:var(--pj);color:var(--surface);display:grid;place-items:center;font:700 17px var(--f-mono);grid-row:span 2;z-index:1}
+.pstep:not(:last-child)::after{content:"";position:absolute;inset-inline-start:21px;top:44px;bottom:0;width:2px;background:var(--pj-soft)}
+.pstep b{font-size:18px}
+.pstep p{color:var(--muted);font-size:15px}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:22px}
+.idea{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:6px;align-content:start}
+.idea .tag{width:max-content}
+.idea b{font-size:17px}
+.idea p{color:var(--muted);font-size:15px}
+.sec-t{font-size:26px;margin:8px 0 12px}
+.book{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 16px}
+.book li{padding:8px 0;border-bottom:1px dashed var(--line)}
+.book li:last-child{border-bottom:0}
+.book ol{margin:0;padding-inline-start:22px}
+
+/* FAB + tutor sheet */
+.fab{position:fixed;z-index:25;inset-inline-end:max(16px,env(safe-area-inset-left,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;background:var(--volt);color:var(--volt-ink);font-weight:800;font-size:17px;padding:14px 20px;cursor:pointer;
+  box-shadow:0 12px 30px -10px rgba(0,0,0,.45)}
+.fab .pulse{width:10px;height:10px;border-radius:50%;background:var(--volt-ink);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.sheet{position:fixed;z-index:40;inset:auto 0 0 auto;width:min(440px,100%);height:min(640px,calc(100% - 40px));display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -10px 50px -12px rgba(0,0,0,.45);
+  padding-bottom:env(safe-area-inset-bottom,0px);transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+[dir="rtl"] .sheet{inset:auto auto 0 0}
+@media (min-width:700px){.sheet,[dir="rtl"] .sheet{inset:auto auto 18px 18px;border-radius:22px}}
+.sheet.open{transform:none}
+.shead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.shead b{font-family:var(--f-display);font-weight:400;font-size:20px;flex:1}
+.status{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--muted)}
+.status.on{background:var(--ok);color:var(--surface)}
+.x{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;display:grid;place-items:center}
+.ctxbar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface-2);font-size:14px;color:var(--muted)}
+.ctxbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctxbar button{border:0;background:none;color:var(--brand);font-weight:700;cursor:pointer}
+.log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:92%;border-radius:16px;padding:10px 14px;font-size:16px;line-height:1.6;overflow-wrap:anywhere}
+.msg.u{align-self:flex-start;background:var(--ink);color:var(--bg);border-end-start-radius:4px}
+.msg.b{align-self:flex-end;background:var(--surface-2);border:1px solid var(--line);border-end-end-radius:4px}
+.msg .src{display:inline-block;font:700 11px var(--f-mono);letter-spacing:.06em;border-radius:6px;padding:1px 7px;margin-bottom:6px}
+.src.kb{background:var(--y2-soft);color:var(--y2)} .src.ai{background:var(--y1-soft);color:var(--y1)}
+.msg .q{font-weight:800;margin-bottom:4px}
+.msg ul{margin:6px 0;padding-inline-start:20px}
+.msg code{font-family:var(--f-mono);font-size:.9em;background:var(--surface);border-radius:4px;padding:0 4px;direction:ltr;unicode-bidi:isolate}
+.msg .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.msg .acts button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700;cursor:pointer;min-height:36px}
+.msg .acts button.pri{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.msg.err{border-color:var(--warn);background:var(--warn-soft)}
+.typing{display:inline-flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:pulse 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+.compose{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.compose textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:var(--ink);font:500 16px var(--f-body);padding:10px 12px;max-height:120px}
+.compose textarea:focus{outline:2px solid var(--brand);outline-offset:0}
+.compose .go{min-height:46px}
+.icb{flex:none;width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.icb:hover{border-color:var(--brand);color:var(--brand)}
+.attach{display:flex;align-items:center;gap:10px;padding:8px 12px 0}
+.attach img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.attach span{flex:1;min-width:0;font-size:14px;color:var(--muted)}
+.attach .x{width:36px;height:36px}
+.msg.u img{display:block;max-width:220px;max-height:220px;border-radius:10px;margin-bottom:6px}
+.camhero{flex:none;width:46px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.scrim{position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s}
+.scrim.on{opacity:1;pointer-events:auto}
+@media (min-width:700px){.scrim{display:none}}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<div dir="rtl" lang="he">
+<header class="top">
+  <div class="wrap gut bar">
+    <button class="logo" type="button" data-go="home" aria-label="לדף הבית">
+      <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true"><rect x="1" y="1" width="36" height="36" rx="10" fill="var(--ink)"/><path d="M21 6 11 21h7l-2.5 11L27 16h-7z" fill="var(--volt)"/></svg>
+      <span><b>מכללת וולט</b><small>הנדסאי חשמל · מסלול וירטואלי</small></span>
+    </button>
+    <nav class="navs" aria-label="ניווט ראשי">
+      <button class="nv" type="button" data-go="year1">שנה א</button>
+      <button class="nv" type="button" data-go="year2">שנה ב</button>
+      <button class="nv" type="button" data-go="year3">שנה ג</button>
+      <button class="nv" type="button" data-go="projects">פרויקטים</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap gut" id="main" tabindex="-1"></main>
+
+<button class="fab" type="button" id="fab" aria-controls="sheet" aria-expanded="false"><span class="pulse" aria-hidden="true"></span>שאלה למרצה</button>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="false" aria-labelledby="sheetTitle" hidden>
+  <div class="shead">
+    <b id="sheetTitle">העוזר של המכללה</b>
+    <span class="status" id="aiStatus">מאגר בלבד</span>
+    <button class="x" type="button" id="closeSheet" aria-label="סגירה"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+  <div class="ctxbar" id="ctxbar" hidden><span id="ctxText"></span><button type="button" id="ctxClear">ניקוי</button></div>
+  <div class="log" id="log" aria-live="polite"></div>
+  <div class="attach" id="attach" hidden><img id="attImg" alt="התמונה שצורפה"><span>התמונה תישלח עם השאלה</span><button class="x" type="button" id="attDel" aria-label="הסרת התמונה"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+  <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
+  <input type="file" id="galIn" accept="image/*" hidden>
+  <form class="compose" id="compose">
+    <button class="icb" type="button" id="camBtn" aria-label="צילום שאלה"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
+    <button class="icb" type="button" id="galBtn" aria-label="תמונה מהגלריה"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg></button>
+    <label class="sr" for="qIn">השאלה שלך</label>
+    <textarea id="qIn" rows="1" placeholder="כתבו שאלה או צלמו אותה"></textarea>
+    <button class="go" type="submit" aria-label="שליחה"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </form>
+</section>
+</div>
+
+<script>
+/* ============ הגדרות ============
+   webhookUrl: כתובת ה-Web App של Google Apps Script (ראו README).
+   כשהיא ריקה, העוזר עונה מהמאגר בלבד, או דרך Claude כשהאתר נפתח כ-Artifact ב-claude.ai. */
+const CONFIG = {
+  webhookUrl: "",
+  kbThreshold: 0.6,
+  year1MaterialsUrl: "https://claude.ai/artifact/Tak5dSyLmPTciNrgbLG9Q2"
+};
+
+/* ============ תוכנית הלימודים ============ */
+const YEARS = [
+ {id:"year1", cls:"y1", glyph:"א", name:"שנה א", sub:"יסודות החשמל והאלקטרוניקה", lead:"הבסיס לכל ההמשך: מעגלי זרם ישר וחילופין, מתמטיקה שימושית, אלקטרוניקה ומערכות ספרתיות.",
+  courses:[
+   {id:"dc", t:"תורת החשמל: זרם ישר", d:"חוקי היסוד של מעגלים חשמליים ושיטות פתרון רשתות.", link:true, ch:[
+     ["מושגי יסוד וחוק אוהם",["מטען, זרם, מתח והתנגדות","חוק אוהם והספק","התנגדות סגולית ותלות בטמפרטורה"]],
+     ["חיבור נגדים",["טורי, מקבילי ומעורב","מחלק מתח ומחלק זרם","גשר ויטסטון"]],
+     ["חוקי קירכהוף",["חוק הזרמים (KCL)","חוק המתחים (KVL)","שיטת זרמי חוגים ומתחי צמתים"]],
+     ["משפטי רשתות",["סופרפוזיציה","תבנין ונורטון","העברת הספק מרבית"]],
+     ["קבלים וסלילים",["קיבול ואנרגיה בשדה חשמלי","טעינה ופריקה, קבוע זמן","השראות ואנרגיה בשדה מגנטי"]],
+     ["מגנטיות",["שטף וצפיפות שטף","חוק פאראדיי והשראה","כוח על מוליך בשדה"]]]},
+   {id:"ac", t:"תורת החשמל: זרם חילופין", d:"גלים סינוסיים, פאזורים, הספקים ומערכות תלת-פאזיות.", link:true, ch:[
+     ["הגל הסינוסי",["ערך שיא, ממוצע ואפקטיבי","תדר, זמן מחזור ומופע"]],
+     ["פאזורים ומספרים מרוכבים",["הצגה קרטזית וקוטבית","עכבה ואדמיטנס"]],
+     ["מעגלי RLC",["טורי ומקבילי","דיאגרמות פאזורים","תהודה וגורם איכות"]],
+     ["הספקים",["הספק פעיל, היגבי ומדומה","מקדם הספק ומשולש הספקים","שיפור מקדם הספק"]],
+     ["מערכות תלת-פאזיות",["חיבור כוכב ומשולש","מתחי קו ומופע","הספק בעומס מאוזן ולא מאוזן"]]]},
+   {id:"math", t:"מתמטיקה שימושית", d:"הכלים המתמטיים שמהנדסאי חשמל צריך ביום-יום.", ch:[
+     ["אלגברה ומשוואות",["מערכות משוואות","דטרמיננטות וכלל קרמר"]],
+     ["טריגונומטריה",["זהויות שימושיות","פונקציות סינוסיות"]],
+     ["מספרים מרוכבים",["פעולות חשבון","מעבר בין הצגות"]],
+     ["חשבון דיפרנציאלי ואינטגרלי",["נגזרות ושימושיהן","אינטגרל וערך ממוצע ואפקטיבי"]]]},
+   {id:"elec", t:"אלקטרוניקה", d:"רכיבים מוליכים למחצה ומעגלים בסיסיים.", ch:[
+     ["דיודה",["אופיין ומודלים","דיודת זנר וייצוב מתח"]],
+     ["מיישרים",["חצי גל וגל מלא","סינון בקבל ואדווה"]],
+     ["טרנזיסטור BJT",["אזורי עבודה","מתג ומגבר"]],
+     ["מגבר שרת",["מגבר מהפך ולא מהפך","מסכם ומשווה"]]]},
+   {id:"digital", t:"מערכות ספרתיות", d:"לוגיקה, שערים ומעגלים צירופיים וסדרתיים.", ch:[
+     ["בסיסי ספירה וקודים",["בינארי, אוקטלי והקסדצימלי","BCD וקוד גריי"]],
+     ["אלגברה בוליאנית ושערים",["שערים בסיסיים","משפטי דה-מורגן"]],
+     ["פישוט פונקציות",["מפות קרנו","תכנון מעגל צירופי"]],
+     ["מעגלים סדרתיים",["דלגלגים","מונים ואוגרים"]]]}
+  ]},
+ {id:"year2", cls:"y2", glyph:"ב", name:"שנה ב", sub:"מכונות חשמל ובקרת הספק", lead:"איך אנרגיה חשמלית הופכת לתנועה, ואיך שולטים בה עם רכיבי מיתוג.",
+  courses:[
+   {id:"machines", t:"מכונות חשמל", d:"שנאים, מכונות זרם ישר, מנועי השראה ומכונות סינכרוניות.", ch:[
+     ["מעגלים מגנטיים",["חוק אמפר ועוצמת שדה","רילקטנס ומעגל מגנטי שקול","היסטרזיס וזרמי מערבולת"]],
+     ["שנאי חד-פאזי",["שנאי אידיאלי ויחס ליפופים","מעגל תמורה","ניסוי ריקם וניסוי קצר","נצילות וויסות מתח"]],
+     ["שנאי תלת-פאזי",["קבוצות חיבור","הפעלה במקביל","שנאי עצמי"]],
+     ["מכונות זרם ישר: גנרטור",["כא\"מ מושרה","סוגי עירור","אופייני עומס"]],
+     ["מנוע זרם ישר",["מומנט ומהירות","התנעה","בקרת מהירות"]],
+     ["מנוע השראה תלת-פאזי",["שדה מסתובב ומהירות סינכרונית","החלקה","מעגל תמורה ואופיין מומנט-מהירות","שיטות התנעה"]],
+     ["מנוע השראה חד-פאזי",["מנוע עם קבל","מנוע עם ליפוף עזר"]],
+     ["מכונה סינכרונית",["גנרטור סינכרוני (אלטרנטור)","מנוע סינכרוני ושיפור מקדם הספק"]]]},
+   {id:"power", t:"בקרת הספק", d:"רכיבי מיתוג, מיישרים מבוקרים, ממירים ומהפכים.", ch:[
+     ["רכיבי מיתוג הספק",["דיודת הספק","תיריסטור (SCR) וטריאק","MOSFET ו-IGBT"]],
+     ["מיישרים לא מבוקרים",["חד-פאזי חצי גל וגל מלא","גשר תלת-פאזי"]],
+     ["מיישרים מבוקרים",["זווית הצתה","עומס התנגדותי והשראי","גשר מבוקר חד ותלת-פאזי"]],
+     ["וסת מתח חילופין",["בקרת מופע בטריאק","עמעום ובקרת חימום"]],
+     ["ממירי DC-DC",["ממיר מוריד (Buck)","ממיר מעלה (Boost)","PWM ומחזור עבודה"]],
+     ["מהפכים",["מהפך חד-פאזי","מהפך תלת-פאזי","SPWM"]],
+     ["ממירי תדר והנעת מנועים",["בקרת V/f","בלימה והחזרת אנרגיה"]]]}
+  ]},
+ {id:"year3", cls:"y3", glyph:"ג", name:"שנה ג", sub:"מערכות הספק ומתקני חשמל", lead:"מהתחנה ועד הלוח: תמסורת, קצרים, הגנות ותכנון מתקנים לפי התקנות.",
+  courses:[
+   {id:"psys", t:"מערכות הספק", d:"ייצור, תמסורת וחלוקה, חישובי קצר והגנות.", ch:[
+     ["מבנה מערכת החשמל",["ייצור, תמסורת וחלוקה","רמות מתח"]],
+     ["יחידות פר-יוניט",["בחירת בסיסים","מעבר בין בסיסים","דיאגרמת עכבות"]],
+     ["פרמטרי קווים",["התנגדות, השראות וקיבול","קו קצר ובינוני"]],
+     ["מפל מתח וזרימת הספק",["ויסות מתח","הפסדים בקו"]],
+     ["קצרים סימטריים",["זרם קצר תלת-פאזי","הספק קצר"]],
+     ["קצרים לא סימטריים",["רכיבים סימטריים","קצר פאזה-אדמה"]],
+     ["הגנות",["ממסרי זרם יתר","סלקטיביות ותיאום הגנות"]]]},
+   {id:"install", t:"מתקני חשמל", d:"תכנון מתקנים לפי חוק החשמל ותקנותיו.", ch:[
+     ["חוק החשמל ותקנותיו",["סוגי רישיונות","מבנה התקנות"]],
+     ["חישוב זרמים וחתכים",["זרם עומס ומקדמי ביקוש","זרם מותר ומקדמי תיקון","תיאום מוליך והגנה"]],
+     ["מפל מתח במתקן",["חישוב חד ותלת-פאזי","ערכים מותרים"]],
+     ["אמצעי הגנה",["מפסקים אוטומטיים","נתיכים","אופייני ניתוק"]],
+     ["הארקות והגנה בפני חשמול",["שיטות הארקה","השוואת פוטנציאלים","ממסר פחת"]],
+     ["לוחות חשמל",["מבנה לוח","סכמה חד-קווית"]],
+     ["שיפור כופל הספק",["חישוב קבלים","סוללות קבלים אוטומטיות"]],
+     ["תכנון מתקן",["מתקן דירתי","מתקן תעשייתי קטן"]]]}
+  ]}
+];
+
+const PROJECT = {
+  steps:[
+    ["בחירת נושא","בוחרים בעיה אמיתית שאפשר לפתור בתוך שנה, עם מרכיב חשמלי משמעותי."],
+    ["הצעת פרויקט","עמוד עד שניים: מטרה, דרישות, תרשים מלבנים ולוח זמנים."],
+    ["אישור מנחה","פגישה עם המנחה, תיקונים ואישור סופי של ההיקף."],
+    ["תכנון","חישובים, בחירת רכיבים, סכמות חשמליות ותוכנת בקר."],
+    ["ביצוע ובדיקות","בנייה, מדידות, תיעוד תקלות והשוואה לחישובים."],
+    ["ספר פרויקט","כתיבה לפי המבנה המוצע למטה, עם נספחים ושרטוטים."],
+    ["הגנה","מצגת קצרה, הדגמה חיה ומענה לשאלות הבוחנים."]
+  ],
+  ideas:[
+    ["מכונות","בקרת מהירות למנוע השראה עם ממיר תדר","השוואת V/f מול הפעלה ישירה: זרם התנעה, מומנט וחיסכון באנרגיה."],
+    ["מכונות","מערך ניסוי לשנאי חד-פאזי","ניסויי ריקם וקצר אוטומטיים עם מדידה ורישום לבקר."],
+    ["בקרת הספק","ממיר Buck לטעינת מצבר מפאנל סולארי","כולל מעקב נקודת הספק מרבי (MPPT) בסיסי."],
+    ["בקרת הספק","מעמעם תיריסטורי עם בקרת זווית הצתה","מדידת צורות גל ומקדם הספק בזוויות שונות."],
+    ["מערכות הספק","מודל זעיר של רשת עם הגנת זרם יתר","הדגמת סלקטיביות בין שתי דרגות הגנה."],
+    ["מתקני חשמל","תכנון מלא למבנה תעשייתי קטן","חישובי עומסים, חתכים, מפל מתח, הגנות ולוח ראשי."],
+    ["מתקני חשמל","מערכת לשיפור כופל הספק אוטומטית","בקר שמחבר דרגות קבלים לפי המדידה."],
+    ["אוטומציה","ניטור צריכת חשמל במפעל","מדידת זרמים ושליחת נתונים לדשבורד בזמן אמת."]
+  ],
+  book:["עמוד שער, הצהרה ותודות","תקציר (עמוד אחד)","תוכן עניינים, רשימת איורים וטבלאות","מבוא: הבעיה, המטרה והדרישות","רקע תאורטי","תכנון: תרשים מלבנים, חישובים ובחירת רכיבים","ביצוע: סכמות, תוכנה והרכבה","בדיקות ותוצאות מול החישובים","סיכום, מסקנות והצעות להמשך","מקורות","נספחים: דפי נתונים, קוד ושרטוטים"]
+};
+
+/* ============ מאגר תשובות (שלב 1) ============ */
+const KB = [
+ {c:"dc",q:"מה זה חוק אוהם?",k:"חוק אוהם מתח זרם התנגדות נגד",a:"המתח על נגד שווה למכפלת הזרם בהתנגדות:\n**V = I · R**\nלכן I = V / R ו-R = V / I. ההספק על הנגד: P = V·I = I²·R = V²/R."},
+ {c:"dc",q:"מה אומרים חוקי קירכהוף?",k:"קירכהוף kcl kvl צומת חוג לולאה",a:"**חוק הזרמים (KCL):** סכום הזרמים הנכנסים לצומת שווה לסכום היוצאים ממנו.\n**חוק המתחים (KVL):** סכום המתחים לאורך חוג סגור הוא אפס (מקורות מול מפלי מתח)."},
+ {c:"dc",q:"איך מחשבים נגד שקול במקביל?",k:"נגדים מקביל טורי שקול חיבור התנגדות שקולה",a:"**טור:** Rt = R1 + R2 + …\n**מקביל:** 1/Rt = 1/R1 + 1/R2 + …\nלשני נגדים במקביל: Rt = R1·R2 / (R1 + R2). ההתנגדות השקולה במקביל קטנה תמיד מהנגד הקטן ביותר."},
+ {c:"dc",q:"מה זה קבוע זמן בקבל?",k:"קבוע זמן טאו קבל טעינה פריקה rc",a:"**τ = R · C** (בשניות). אחרי τ אחד הקבל נטען לכ-63% מהמתח הסופי, ואחרי 5τ הוא נחשב טעון לגמרי.\nטעינה: Vc = E·(1 − e^(−t/τ))."},
+ {c:"ac",q:"מה זה מקדם הספק?",k:"מקדם הספק כופל הספק cos פי הספק פעיל היגבי מדומה",a:"מקדם ההספק הוא היחס בין ההספק הפעיל להספק המדומה: **cosφ = P / S**.\n- P = V·I·cosφ [W]\n- Q = V·I·sinφ [VAR]\n- S = V·I [VA], ו-S² = P² + Q²"},
+ {c:"ac",q:"מה הקשר בין מתח קו למתח מופע בכוכב ובמשולש?",k:"כוכב משולש מתח קו מופע פאזה תלת פאזי שורש שלוש",a:"**כוכב:** VL = √3 · Vph, ו-IL = Iph.\n**משולש:** VL = Vph, ו-IL = √3 · Iph.\nבשני המקרים, בעומס מאוזן: P = √3 · VL · IL · cosφ."},
+ {c:"ac",q:"מה הערך האפקטיבי של מתח סינוסי?",k:"ערך אפקטיבי rms שיא סינוסי ממוצע",a:"לגל סינוסי: **Vrms = Vm / √2 ≈ 0.707·Vm**.\nלמשל, ברשת 230V אפקטיבי ערך השיא הוא כ-325V."},
+ {c:"ac",q:"מתי יש תהודה במעגל RLC?",k:"תהודה רזוננס rlc תדר תהודה",a:"תהודה מתרחשת כשההיגב ההשראי שווה להיגב הקיבולי (XL = XC). התדר:\n**f0 = 1 / (2π·√(L·C))**\nבמעגל טורי העכבה מינימלית (שווה ל-R) והזרם מרבי."},
+ {c:"machines",q:"מה יחס ההשנאה בשנאי?",k:"שנאי יחס השנאה ליפופים ראשוני משני",a:"בשנאי אידיאלי:\n**V1 / V2 = N1 / N2 = I2 / I1**\nהמתח עולה עם מספר הליפופים, והזרם יורד באותו יחס, כך שההספק בשני הצדדים שווה."},
+ {c:"machines",q:"מה מודדים בניסוי ריקם ובניסוי קצר של שנאי?",k:"ניסוי ריקם קצר שנאי הפסדי ברזל נחושת",a:"**ניסוי ריקם** (מתח נקוב, משני פתוח): ההספק הנמדד הוא בקירוב הפסדי הברזל, וממנו מחשבים את הענף המקבילי (Rc, Xm).\n**ניסוי קצר** (משני מקוצר, זרם נקוב במתח נמוך): ההספק הנמדד הוא בקירוב הפסדי הנחושת, וממנו מחשבים את עכבת הקצר (Req, Xeq)."},
+ {c:"machines",q:"מתי נצילות השנאי מרבית?",k:"נצילות מרבית שנאי הפסדים",a:"הנצילות מרבית כשהפסדי הנחושת (התלויים בעומס) שווים להפסדי הברזל (הקבועים).\nהעומס היחסי שבו זה קורה: **x = √(Pfe / Pcu,נקוב)**."},
+ {c:"machines",q:"איך מחשבים מהירות סינכרונית?",k:"מהירות סינכרונית קטבים תדר סל\"ד מנוע השראה",a:"**ns = 120 · f / p** [סל\"ד], כש-p הוא מספר הקטבים.\nב-50Hz: שני קטבים → 3000, ארבעה → 1500, שישה → 1000 סל\"ד."},
+ {c:"machines",q:"איך מחשבים החלקה במנוע השראה?",k:"החלקה מנוע השראה אסינכרוני מהירות רוטור",a:"**s = (ns − n) / ns**, כש-n היא מהירות הרוטור.\nבעומס נקוב ההחלקה בדרך כלל 2%–6%. תדר זרמי הרוטור: fr = s·f."},
+ {c:"machines",q:"למה משתמשים בהתנעת כוכב-משולש?",k:"התנעה כוכב משולש זרם התנעה מנוע",a:"מתניעים בחיבור כוכב ועוברים למשולש. בכוכב מתח המופע קטן פי √3, ולכן **זרם הקו בהתנעה ומומנט ההתנעה יורדים לשליש** מאשר בהתנעה ישירה במשולש. מתאים לעומס עם מומנט התנעה נמוך."},
+ {c:"machines",q:"מה קובע את המהירות של מנוע זרם ישר?",k:"מנוע זרם ישר מהירות עירור שטף כאמ נגדי",a:"הכא\"מ הנגדי: E = k·Φ·n, ולכן:\n**n = (V − Ia·Ra) / (k·Φ)**\nאפשר לשנות מהירות דרך מתח העוגן (V) או דרך השטף (זרם העירור). הקטנת השטף מעלה את המהירות."},
+ {c:"power",q:"איך מדליקים ומכבים תיריסטור?",k:"תיריסטור scr הצתה שער זרם החזקה כיבוי",a:"**הדלקה:** פולס זרם לשער, כשהמתח בין האנודה לקתודה חיובי.\n**כיבוי:** אי אפשר דרך השער. התיריסטור נכבה רק כשהזרם יורד מתחת לזרם ההחזקה, למשל במעבר האפס של רשת החילופין."},
+ {c:"power",q:"מה המתח הממוצע במיישר מבוקר?",k:"מיישר מבוקר זווית הצתה אלפא מתח ממוצע גשר",a:"- **חצי גל, עומס התנגדותי:** Vdc = (Vm / 2π)·(1 + cosα)\n- **גשר חד-פאזי מלא, זרם רציף (עומס השראי):** Vdc = (2Vm / π)·cosα\n- **גשר תלת-פאזי:** Vdc = (3√2 / π)·VL·cosα ≈ 1.35·VL·cosα"},
+ {c:"power",q:"מה המתח ביציאה של ממיר Buck ו-Boost?",k:"buck boost ממיר מוריד מעלה מחזור עבודה dc dc",a:"במצב זרם רציף, כש-D הוא מחזור העבודה:\n**Buck:** Vo = D · Vin\n**Boost:** Vo = Vin / (1 − D)"},
+ {c:"power",q:"למה שומרים על V/f קבוע בממיר תדר?",k:"ממיר תדר v/f בקרת מהירות שטף מנוע",a:"השטף במנוע יחסי ל-V/f. אם מורידים תדר בלי להוריד מתח, הליבה נכנסת לרוויה והזרם עולה. שמירה על **V/f קבוע** שומרת על שטף ומומנט זמין קבועים בתחום שמתחת לתדר הנקוב."},
+ {c:"psys",q:"איך עובדים עם יחידות פר-יוניט?",k:"פר יוניט per unit בסיס עכבה pu",a:"**Zbase = V²base / Sbase**, ו-Zpu = Z / Zbase.\nמעבר בסיס: **Zחדש = Zישן · (Vישן / Vחדש)² · (Sחדש / Sישן)**.\nהיתרון: עכבת השנאי זהה בשני צדדיו, וקל להשוות בין ציוד."},
+ {c:"psys",q:"איך מחשבים זרם קצר תלת-פאזי?",k:"זרם קצר תלת פאזי הספק קצר סימטרי",a:"ביחידות פר-יוניט, עם מתח לפני התקלה 1pu:\n**Isc,pu = 1 / Zpu**, ולכן Isc = Ibase / Zpu.\nהספק הקצר: **Ssc = Sbase / Zpu**."},
+ {c:"psys",q:"איך מחשבים מפל מתח בקו?",k:"מפל מתח קו תמסורת ויסות",a:"בקירוב לקו קצר (למופע):\n**ΔV ≈ I · (R·cosφ + X·sinφ)**\nבתלת-פאזי, למתח הקו מכפילים ב-√3."},
+ {c:"install",q:"איך בוחרים חתך מוליך?",k:"חתך מוליך כבל בחירה זרם מותר הגנה",a:"1. מחשבים את זרם העומס **IB**.\n2. בוחרים הגנה עם זרם נקוב **In**.\n3. בוחרים מוליך שזרם המותר שלו **IZ**, אחרי מקדמי תיקון לטמפרטורה ולצורת ההתקנה, מקיים IB ≤ In ≤ IZ.\n4. בודקים מפל מתח ומגדילים חתך אם צריך."},
+ {c:"install",q:"איך מחשבים מפל מתח חד-פאזי במתקן?",k:"מפל מתח חד פאזי מתקן אורך כבל נחושת",a:"לעומס התנגדותי: **ΔV = 2 · I · L · ρ / A**\nL אורך הקו במטרים (2 בגלל הלוך-חזור), A החתך במ\"מ², ולנחושת ρ ≈ 0.0175 Ω·mm²/m."},
+ {c:"install",q:"איך עובד ממסר פחת?",k:"ממסר פחת זרם דלף rcd מפסק מגן חשמול",a:"הממסר משווה בין הזרם בפאזה לזרם באפס. אם יש הפרש, הזרם דולף דרך מסלול אחר, למשל דרך גוף אדם או הארקה, והממסר מנתק. ממסר עם רגישות 30mA הוא הנפוץ להגנה על אנשים."},
+ {c:"install",q:"איך מחשבים קבלים לשיפור כופל הספק?",k:"שיפור כופל הספק קבלים מקדם הספק kvar",a:"**Qc = P · (tanφ1 − tanφ2)**\nφ1 הזווית הנוכחית ו-φ2 הזווית הרצויה. לדוגמה: 100kW משיפור 0.8 ל-0.95 → Qc ≈ 100·(0.75 − 0.329) ≈ 42kVAR."},
+ {c:"projects",q:"מה המבנה של ספר פרויקט?",k:"ספר פרויקט מבנה פרויקט גמר כתיבה פרקים",a:"המבנה המקובל: תקציר, מבוא ומטרות, רקע תאורטי, תכנון (חישובים ובחירת רכיבים), ביצוע, בדיקות ותוצאות, סיכום ומסקנות, מקורות ונספחים. הרשימה המלאה מופיעה בעמוד הפרויקטים."},
+ {c:"projects",q:"איך בוחרים נושא לפרויקט גמר?",k:"נושא פרויקט גמר בחירה רעיון",a:"כדאי לבחור בעיה אמיתית, למשל ממקום העבודה, שאפשר לסיים בשנה ושיש בה גם חישובים וגם מימוש. מגבילים את ההיקף מראש ומתייעצים עם המנחה לפני שמתחייבים. במאגר הרעיונות בעמוד הפרויקטים יש נקודות פתיחה."}
+];
+
+/* ============ ניתוב ============ */
+const $ = s => document.querySelector(s);
+const main = $("#main");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const allCourses = () => YEARS.flatMap(y => y.courses.map(c => ({...c, year:y})));
+const courseName = id => (allCourses().find(c => c.id === id) || {}).t || (id === "projects" ? "פרויקטים" : "");
+const arrowSvg = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const chevSvg = '<svg class="chev" width="16" height="16" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+function go(route){
+  if (location.hash.slice(1) !== route) { try { history.pushState(null, "", "#" + route); } catch(e) { location.hash = route; } }
+  render();
+}
+function render(){
+  const r = location.hash.slice(1) || "home";
+  document.querySelectorAll(".nv").forEach(b => b.setAttribute("aria-current", r.startsWith(b.dataset.go) || (r.startsWith("c-") && courseYear(r.slice(2)) === b.dataset.go) ? "page" : "false"));
+  if (r.startsWith("c-")) courseView(r.slice(2));
+  else if (r === "projects") projectsView();
+  else if (YEARS.some(y => y.id === r)) yearView(r);
+  else homeView();
+  main.firstElementChild?.classList.add("view");
+  window.scrollTo({top:0});
+}
+const courseYear = id => (allCourses().find(c => c.id === id) || {year:{}}).year.id;
+
+function homeView(){
+  const tile = y => `<button class="tile ${y.cls}" type="button" data-go="${y.id}">
+      <span class="glyph" aria-hidden="true">${y.glyph}</span><span class="tt">${y.name}</span><span class="ts">${y.sub}</span>
+      <span class="meta">${y.courses.map(c => `<span class="tag">${esc(c.t)}</span>`).join("")}</span></button>`;
+  main.innerHTML = `<div>
+   <section class="hero">
+     <span class="eyebrow">הנדסאי חשמל · שלוש שנים · פרויקט גמר</span>
+     <h1>לומדים חשמל, <em>ושואלים</em> מתי שרוצים.</h1>
+     <p class="lead">חומרי הלימוד של כל המסלול במקום אחד, ועוזר שעונה על שאלות: קודם מהמאגר של המכללה, ואם אין שם תשובה, Claude עונה. אפשר גם לצלם שאלה מהדף או להעלות תמונה מהגלריה.</p>
+     <form class="askbig" id="heroAsk"><label class="sr" for="heroQ">שאלה</label>
+       <input id="heroQ" placeholder="לדוגמה: איך מחשבים זרם קצר?" autocomplete="off">
+       <button class="camhero" type="button" data-photo="1" aria-label="צילום או העלאת שאלה"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
+       <button class="go" type="submit">שאלה ${arrowSvg}</button></form>
+     <div class="chips">${["מה זה מקדם הספק?","החלקה במנוע השראה","ממיר Buck","איך בוחרים חתך מוליך?"].map(t => `<button class="chip" type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+   </section>
+   <div class="tiles">${YEARS.map(tile).join("")}
+     <button class="tile pj" type="button" data-go="projects"><span class="glyph" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span>
+       <span class="tt">פרויקטים</span><span class="ts">פרויקט גמר: מהרעיון ועד ההגנה</span>
+       <span class="meta"><span class="tag">7 שלבים</span><span class="tag">מאגר רעיונות</span><span class="tag">מבנה ספר</span></span></button>
+   </div>
+   <div class="how">
+     <div><span class="stepn">01</span><b>בוחרים שנה וקורס</b><p>כל קורס מחולק לפרקים, ובכל פרק רשימת הנושאים.</p></div>
+     <div><span class="stepn">02</span><b>שואלים על הפרק</b><p>הכפתור "שאלה על הפרק" פותח את העוזר עם ההקשר של הפרק.</p></div>
+     <div><span class="stepn">03</span><b>מקבלים תשובה</b><p>תשובה מוכנה מהמאגר מגיעה מיד. אם היא לא מספיקה, Claude ממשיך משם.</p></div>
+   </div></div>`;
+  $("#heroAsk").addEventListener("submit", e => { e.preventDefault(); const v = $("#heroQ").value.trim(); if (v) { openSheet(); ask(v); $("#heroQ").value = ""; } });
+}
+
+function yearView(id){
+  const y = YEARS.find(x => x.id === id);
+  main.innerHTML = `<div class="${y.cls}">
+    <div class="crumbs"><button type="button" data-go="home">דף הבית</button><span>/</span><span>${y.name}</span></div>
+    <header class="vhead ${y.cls}"><span class="eyebrow">${y.name.toUpperCase()} · ${y.courses.length} קורסים</span><h1>${y.sub}</h1><p>${y.lead}</p></header>
+    <div class="courses">${y.courses.map(c => `<button class="course" type="button" data-go="c-${c.id}">
+      <h2>${esc(c.t)}</h2><p>${esc(c.d)}</p><span class="arrow">${arrowSvg}</span>
+      <span class="meta"><span class="tag" style="--cs:var(--surface-2)">${c.ch.length} פרקים</span>${c.link ? '<span class="tag" style="--cs:var(--ok);--c:var(--surface)">יש חומר מלא</span>' : '<span class="tag" style="--cs:var(--surface-2)">בהכנה</span>'}</span></button>`).join("")}</div></div>`;
+}
+
+function courseView(cid){
+  const c = allCourses().find(x => x.id === cid);
+  if (!c) return homeView();
+  const y = c.year;
+  main.innerHTML = `<div class="${y.cls}">
+    <div class="crumbs"><button type="button" data-go="home">דף הבית</button><span>/</span><button type="button" data-go="${y.id}">${y.name}</button><span>/</span><span>${esc(c.t)}</span></div>
+    <header class="vhead ${y.cls}"><span class="eyebrow">${y.name.toUpperCase()} · קורס</span><h1>${esc(c.t)}</h1><p>${esc(c.d)}</p>
+      <div class="row"><button class="btn solid" type="button" data-askctx="${c.id}" data-label="${esc(c.t)}">שאלה על הקורס</button></div></header>
+    ${c.link ? `<a class="linkcard" href="${CONFIG.year1MaterialsUrl}" target="_blank" rel="noopener"><span>חומרי הלימוד המלאים לקורס<small>פרקים, תרגילים ומבחני מה"ט עם פתרונות</small></span>${arrowSvg}</a>` : ""}
+    ${c.ch.map(([t, topics], i) => `<div class="chap">
+      <button type="button" aria-expanded="false"><span class="cn">${i+1}</span><span class="ct">${esc(t)}</span><span class="st${c.link ? " ready" : ""}">${c.link ? "זמין" : "בהכנה"}</span>${chevSvg}</button>
+      <div class="body"><ul>${topics.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <div class="row"><button class="btn volt" type="button" data-askctx="${c.id}" data-label="${esc(c.t + " · " + t)}">שאלה על הפרק</button></div></div></div>`).join("")}
+  </div>`;
+  main.querySelectorAll(".chap > button").forEach(b => b.addEventListener("click", () => {
+    const open = b.parentElement.classList.toggle("open"); b.setAttribute("aria-expanded", open);
+  }));
+}
+
+function projectsView(){
+  main.innerHTML = `<div>
+    <div class="crumbs"><button type="button" data-go="home">דף הבית</button><span>/</span><span>פרויקטים</span></div>
+    <header class="vhead pj"><span class="eyebrow">פרויקט גמר · שנה ג</span><h1>מהרעיון ועד ההגנה</h1><p>שבעה שלבים, מאגר רעיונות לפי תחום ומבנה מוכן לספר הפרויקט.</p>
+      <div class="row"><button class="btn solid" type="button" data-askctx="projects" data-label="פרויקט גמר">שאלה על הפרויקט</button></div></header>
+    <h2 class="sec-t">שלבי העבודה</h2>
+    <div class="pipeline">${PROJECT.steps.map(([t, d]) => `<div class="pstep"><b>${t}</b><p>${d}</p></div>`).join("")}</div>
+    <h2 class="sec-t">מאגר רעיונות</h2>
+    <div class="ideas">${PROJECT.ideas.map(([tag, t, d]) => `<div class="idea"><span class="tag" style="--cs:var(--pj-soft);--c:var(--pj)">${tag}</span><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join("")}</div>
+    <h2 class="sec-t">מבנה ספר הפרויקט</h2>
+    <div class="book"><ol>${PROJECT.book.map(b => `<li>${esc(b)}</li>`).join("")}</ol></div></div>`;
+}
+
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); go(g.dataset.go); return; }
+  const a = e.target.closest("[data-ask]"); if (a) { openSheet(); ask(a.dataset.ask); return; }
+  const ph = e.target.closest("[data-photo]"); if (ph) { openSheet(); $("#galIn").click(); return; }
+  const c = e.target.closest("[data-askctx]"); if (c) { setCtx(c.dataset.askctx, c.dataset.label); openSheet(); $("#qIn").focus(); }
+});
+window.addEventListener("popstate", render);
+window.addEventListener("hashchange", render);
+
+/* ============ העוזר ============ */
+const sheet = $("#sheet"), scrim = $("#scrim"), fab = $("#fab"), log = $("#log");
+let ctx = null;            // {id, label}
+const chat = [];        // שיחה עם Claude: [{role, content}]
+let sampleFn = null;       // Claude בתוך claude.ai
+let imgOK = false;         // האם אפשר לשלוח תמונות דרך sampleFn
+
+function openSheet(){ sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add("open")); scrim.classList.add("on"); fab.setAttribute("aria-expanded","true"); fab.hidden = true;
+  if (!log.children.length) bot(`<div class="q">שלום! על מה נעבוד?</div>כתבו שאלה מכל קורס במסלול. קודם אחפש תשובה במאגר של המכללה, ואם אין שם תשובה מתאימה, Claude יענה.`); }
+function closeSheet(){ sheet.classList.remove("open"); scrim.classList.remove("on"); fab.setAttribute("aria-expanded","false"); fab.hidden = false; setTimeout(() => { if (!sheet.classList.contains("open")) sheet.hidden = true; }, 360); fab.focus(); }
+fab.addEventListener("click", openSheet);
+$("#closeSheet").addEventListener("click", closeSheet);
+scrim.addEventListener("click", closeSheet);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheet.classList.contains("open")) closeSheet(); });
+
+function setCtx(id, label){ ctx = id ? {id, label} : null; $("#ctxbar").hidden = !ctx; if (ctx) $("#ctxText").textContent = "הקשר: " + label; }
+$("#ctxClear").addEventListener("click", () => setCtx(null));
+
+function md(t){
+  const lines = esc(t).split("\n"); let out = "", inList = false;
+  for (const ln of lines) {
+    const li = ln.match(/^\s*(?:[-*•]|\d+\.)\s+(.*)/);
+    if (li) { if (!inList) { out += "<ul>"; inList = true; } out += "<li>" + inl(li[1]) + "</li>"; continue; }
+    if (inList) { out += "</ul>"; inList = false; }
+    out += ln.trim() ? inl(ln) + "<br>" : "<br>";
+  }
+  if (inList) out += "</ul>";
+  return out.replace(/(<br>)+$/, "");
+}
+const inl = s => s.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^#{1,4}\s*(.*)$/, "<b>$1</b>");
+
+function addMsg(cls, html){ const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+const bot = html => addMsg("b", html);
+
+/* חיפוש במאגר */
+const STOP = new Set("מה איך למה מתי של את על עם זה זו הוא היא יש אין או גם כל אני אתה מחשבים מחשב לחשב חישוב עובד עובדת אומר אומרים בין הם הן לי לו כן לא".split(" "));
+const PRE = "והבלמשכ";
+function toks(s){
+  return s.toLowerCase().replace(/[֑-ׇ"'״׳?.,:;!()\/\-–]/g, " ").split(/\s+/).filter(w => w && !STOP.has(w))
+    .flatMap(w => { const v = [w]; if (w.length > 3 && PRE.includes(w[0])) { v.push(w.slice(1)); if (w.length > 4 && PRE.includes(w[1])) v.push(w.slice(2)); } return v.filter(x => !STOP.has(x)); });
+}
+const KBT = KB.map(e => ({e, k:new Set(toks(e.k)), q:new Set(toks(e.q))}));
+function words(s){
+  return s.toLowerCase().replace(/[\u0591-\u05C7"'״׳?.,:;!()\/\-–]/g, " ").split(/\s+/).filter(w => w && !STOP.has(w))
+    .map(w => { const v = [w]; if (w.length > 3 && PRE.includes(w[0])) { v.push(w.slice(1)); if (w.length > 4 && PRE.includes(w[1])) v.push(w.slice(2)); } return v; });
+}
+function wscore(vs, k, q){
+  let best = 0;
+  for (const t of vs) {
+    if (k.has(t)) best = Math.max(best, 1);
+    else if (q.has(t)) best = Math.max(best, .7);
+    else if (t.length > 3 && [...k].some(x => x.length > 3 && (x.startsWith(t) || t.startsWith(x)))) best = Math.max(best, .5);
+  }
+  return best;
+}
+function searchKB(q){
+  const ws = words(q); if (!ws.length) return [];
+  return KBT.map(({e, k, q:qq}) => {
+    let s = 0; for (const vs of ws) s += wscore(vs, k, qq);
+    let r = s / ws.length;
+    if (ctx && e.c === ctx.id) r += .1;
+    return {e, s:r, raw:s};
+  }).filter(r => r.raw >= 1).sort((a, b) => b.s - a.s);
+}
+
+async function ask(q){
+  addMsg("u", esc(q));
+  const hits = searchKB(q);
+  if (hits.length && hits[0].s >= CONFIG.kbThreshold) {
+    const h = hits[0].e;
+    const m = bot(`<span class="src kb">מהמאגר · ${esc(courseName(h.c))}</span><div class="q">${esc(h.q)}</div>${md(h.a)}
+      <div class="acts"><button type="button" class="ok">זה ענה לי</button><button type="button" class="pri more">שאלה ל-Claude בכל זאת</button></div>`);
+    m.querySelector(".ok").addEventListener("click", ev => { ev.target.parentElement.innerHTML = '<span style="color:var(--ok);font-weight:700">מעולה, בהצלחה!</span>'; });
+    m.querySelector(".more").addEventListener("click", ev => { ev.target.parentElement.remove(); askClaude(q, h); });
+    return;
+  }
+  askClaude(q, hits[0]?.e);
+}
+
+const SYSTEM = "אתה מרצה סבלני במכללה להנדסאי חשמל בישראל (מגמת חשמל: שנה א יסודות, שנה ב מכונות חשמל ובקרת הספק, שנה ג מערכות הספק ומתקני חשמל, ופרויקט גמר). ענה בעברית, קצר וברור, ברמה של סטודנט להנדסאי. בשאלת חישוב: כתוב את הנוסחה, הצב מספרים עם יחידות, ותן תוצאה סופית. כשסטודנט מבקש פתרון לשיעורי בית, הדרך אותו צעד אחר צעד במקום לתת רק תשובה. אם השאלה נוגעת לתקנות החשמל, ציין שהערכים צריכים אימות מול נוסח התקנות העדכני. אל תמציא נתונים.";
+
+async function askClaude(q, near, pic){
+  const wait = bot('<span class="typing" aria-label="Claude חושב"><i></i><i></i><i></i></span>');
+  const ctxLine = [ctx ? "הסטודנט שואל במסגרת: " + ctx.label : "", near ? "תשובה קרובה מהמאגר (ייתכן שלא מספיקה): " + near.a : ""].filter(Boolean).join("\n");
+  const userTurn = (ctxLine ? ctxLine + "\n\n" : "") + (pic ? "הסטודנט צירף תמונה של שאלה. קרא אותה בעיון, כולל שרטוטים ומספרים.\n" : "") + "שאלה: " + q;
+  const histTurn = (pic ? "[צורפה תמונה] " : "") + userTurn;
+  try {
+    let answer;
+    if (sampleFn) {
+      const opts = {};
+      if (pic) { if (!imgOK) throw new Error("שליחת תמונות לא זמינה כאן. כתבו את השאלה במילים."); opts.images = [pic.blob]; }
+      const r = await sampleFn([{role:"user", content:SYSTEM}, {role:"assistant", content:"הבנתי. אענה כמרצה."}, ...chat.slice(-6), {role:"user", content:userTurn}], opts);
+      answer = r.text;
+    } else if (CONFIG.webhookUrl) {
+      const res = await fetch(CONFIG.webhookUrl, {method:"POST", body:JSON.stringify({question:q, context:ctxLine, history:chat.slice(-6), image: pic ? {media_type:"image/jpeg", data:pic.b64} : undefined})});
+      const j = await res.json(); if (j.error) throw new Error(j.error); answer = j.answer;
+    } else {
+      wait.remove();
+      addMsg("b err", `<b>עדיין אין חיבור ל-Claude.</b><br>${pic ? "שאלה בתמונה" : "שאלה שאין לה תשובה במאגר"} דורשת את Claude. המרצה צריך להגדיר את החיבור (כתובת ה-Apps Script) כדי שאפשר יהיה לשאול כל שאלה.`);
+      return;
+    }
+    chat.push({role:"user", content:histTurn}, {role:"assistant", content:answer});
+    wait.remove();
+    bot(`<span class="src ai">Claude</span><br>${md(answer)}`);
+  } catch (err) {
+    wait.remove();
+    const code = err && err.code;
+    addMsg("b err", code === "rate_limited" ? "יותר מדי שאלות ברגע אחד. נסו שוב בעוד דקה." : `<b>לא הצלחתי לקבל תשובה.</b><br>${esc(err && err.message || "בדקו את החיבור ונסו שוב.")}`);
+  }
+}
+
+/* תמונה: צילום או גלריה. מוקטנת בדפדפן ל-1600 פיקסלים לפני השליחה */
+let img = null;  // {blob, b64, url}
+async function prepImage(file){
+  if (!file || !file.type.startsWith("image/")) throw new Error("זה לא קובץ תמונה.");
+  const url0 = URL.createObjectURL(file);
+  try {
+    const im = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new Error("לא הצלחתי לפתוח את התמונה. נסו לצלם שוב או לבחור קובץ JPG.")); i.src = url0; });
+    const k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight));
+    const cv = document.createElement("canvas"); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+    const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height);
+    const dataUrl = cv.toDataURL("image/jpeg", 0.85);
+    const blob = await (await fetch(dataUrl)).blob();
+    return {blob, b64:dataUrl.split(",")[1], url:dataUrl};
+  } finally { URL.revokeObjectURL(url0); }
+}
+async function onPick(e){
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try { img = await prepImage(f); $("#attImg").src = img.url; $("#attach").hidden = false; $("#qIn").focus(); }
+  catch (err) { addMsg("b err", esc(err.message)); }
+}
+$("#camIn").addEventListener("change", onPick);
+$("#galIn").addEventListener("change", onPick);
+$("#camBtn").addEventListener("click", () => $("#camIn").click());
+$("#galBtn").addEventListener("click", () => $("#galIn").click());
+function clearImg(){ img = null; $("#attach").hidden = true; $("#attImg").removeAttribute("src"); }
+$("#attDel").addEventListener("click", clearImg);
+
+$("#compose").addEventListener("submit", e => {
+  e.preventDefault(); const v = $("#qIn").value.trim();
+  if (img) { const pic = img; clearImg(); $("#qIn").value = ""; askImage(v, pic); return; }
+  if (!v) return; $("#qIn").value = ""; ask(v);
+});
+function askImage(text, pic){
+  const m = addMsg("u", ""); const i = document.createElement("img"); i.src = pic.url; i.alt = "השאלה בתמונה"; m.appendChild(i);
+  if (text) m.appendChild(document.createTextNode(text));
+  askClaude(text || "פתרו את השאלה שבתמונה והסבירו את הדרך.", null, pic);
+}
+$("#qIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#compose").requestSubmit(); } });
+
+function setStatus(){ const on = !!(sampleFn || CONFIG.webhookUrl); const s = $("#aiStatus"); s.textContent = on ? "Claude מחובר" : "מאגר בלבד"; s.classList.toggle("on", on); }
+(async () => {
+  try { if (window.claude && claude.use) { const s = await claude.use("sample"); if (s) { sampleFn = s; try { imgOK = !!(await s.limits()).images; } catch (e) {} } } } catch (e) {}
+  setStatus();
+})();
+setStatus();
+render();
+</script>
+
+</body></html>

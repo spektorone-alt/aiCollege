@@ -445,6 +445,7 @@ function yearView(id){
   main.innerHTML = `<div class="${y.cls}">
     <div class="crumbs"><button type="button" data-go="home">דף הבית</button><span>/</span><span>${y.name}</span></div>
     <header class="vhead ${y.cls}"><span class="eyebrow">${y.name.toUpperCase()} · ${y.courses.length} קורסים</span><h1>${y.sub}</h1><p>${y.lead}</p></header>
+    ${y.id === "year1" ? `<a class="linkcard" href="${CONFIG.year1MaterialsUrl}" target="_blank" rel="noopener"><span>חומרי הלימוד המלאים: תורת החשמל<small>פרקים, תרגילים ומבחני מה"ט עם פתרונות</small></span>${arrowSvg}</a>` : ""}
     <div class="courses">${y.courses.map(c => `<button class="course" type="button" data-go="c-${c.id}">
       <h2>${esc(c.t)}</h2><p>${esc(c.d)}</p><span class="arrow">${arrowSvg}</span>
       <span class="meta"><span class="tag" style="--cs:var(--surface-2)">${c.ch.length} פרקים</span>${c.link ? '<span class="tag" style="--cs:var(--ok);--c:var(--surface)">יש חומר מלא</span>' : '<span class="tag" style="--cs:var(--surface-2)">בהכנה</span>'}</span></button>`).join("")}</div></div>`;
@@ -458,7 +459,6 @@ function courseView(cid){
     <div class="crumbs"><button type="button" data-go="home">דף הבית</button><span>/</span><button type="button" data-go="${y.id}">${y.name}</button><span>/</span><span>${esc(c.t)}</span></div>
     <header class="vhead ${y.cls}"><span class="eyebrow">${y.name.toUpperCase()} · קורס</span><h1>${esc(c.t)}</h1><p>${esc(c.d)}</p>
       <div class="row"><button class="btn solid" type="button" data-askctx="${c.id}" data-label="${esc(c.t)}">שאלה על הקורס</button></div></header>
-    ${c.link ? `<a class="linkcard" href="${CONFIG.year1MaterialsUrl}" target="_blank" rel="noopener"><span>חומרי הלימוד המלאים לקורס<small>פרקים, תרגילים ומבחני מה"ט עם פתרונות</small></span>${arrowSvg}</a>` : ""}
     ${c.ch.map(([t, topics], i) => `<div class="chap">
       <button type="button" aria-expanded="false"><span class="cn">${i+1}</span><span class="ct">${esc(t)}</span><span class="st${c.link ? " ready" : ""}">${c.link ? "זמין" : "בהכנה"}</span>${chevSvg}</button>
       <div class="body"><ul>${topics.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
